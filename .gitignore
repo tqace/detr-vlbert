@@ -1,0 +1,12 @@
+./apex/
+./cache/
+./data/
+./model/
+./*output*/
+./figs/
+*.model
+*.pyc
+*.zip
+*.log
+*.ubuntu
+./tmp/

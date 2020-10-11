@@ -1,0 +1,5 @@
+# ninja log v5
+1	13319	1600906912459538543	/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/build/temp.linux-x86_64-3.8/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/cuda/ROIAlign_cuda.o	8f343b876afd0dd3
+0	14002	1600906913143528784	/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/build/temp.linux-x86_64-3.8/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/cuda/ROIPool_cuda.o	7b4b838b710f93b7
+1	20394	1600906919535437904	/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/build/temp.linux-x86_64-3.8/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/cpu/ROIAlign_cpu.o	4d35532ae9624396
+1	23497	1600906922639393963	/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/build/temp.linux-x86_64-3.8/mnt/diskb/qu_tang/detr-vlbert/common/lib/roi_pooling/vision.o	e7da4b0929a161ab
