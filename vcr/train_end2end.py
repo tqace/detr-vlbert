@@ -3,7 +3,6 @@ import os
 import argparse
 import torch
 import subprocess
-
 from vcr.function.config import config, update_config
 from vcr.function.train import train_net
 from vcr.function.test import test_net

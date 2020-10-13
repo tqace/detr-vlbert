@@ -36,7 +36,7 @@ class DETR(nn.Module):
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
         """
         super().__init__()
-        num_classes = 80 if args.dataset_file != 'coco' else 91
+        num_classes = 91 if args.dataset_file != 'coco' else 91
         if args.dataset_file == "coco_panoptic":
             num_classes = 250
         self.backbone = build_backbone(args)
@@ -97,19 +97,6 @@ class DETR(nn.Module):
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
-        #model_ = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True).cuda()
-        #model_.eval()
-        #transform = T.Compose([
-    	#	T.Resize(800),
-        #    	T.ToTensor(),
-	#	T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-	#    ])
-        #url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-        #im = Image.open(requests.get(url, stream=True).raw)
-        #img = transform(im).unsqueeze(0)
-        
-        #ForkedPdb().set_trace()
-
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
         #return out

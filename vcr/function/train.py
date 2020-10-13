@@ -25,7 +25,6 @@ from common.nlp.bert.optimization import AdamW, WarmupLinearSchedule
 from vcr.data.build import make_dataloader, build_dataset, build_transforms
 from vcr.modules import *
 from vcr.function.val import do_validation
-
 try:
     from apex import amp
     from apex.parallel import DistributedDataParallel as Apex_DDP
@@ -61,7 +60,7 @@ def train_net(args, config):
         torch.backends.cudnn.enabled = False
 
     if args.dist:
-        model = eval(config.MODULE)(config)
+        model = eval(config.MODULE)(args,config)
         local_rank = int(os.environ.get('LOCAL_RANK') or 0)
         config.GPUS = str(local_rank)
         torch.cuda.set_device(local_rank)
@@ -143,7 +142,7 @@ def train_net(args, config):
 
     else:
         #os.environ['CUDA_VISIBLE_DEVICES'] = config.GPUS
-        model = eval(config.MODULE)(config)
+        model = eval(config.MODULE)(args,config)
         summary_parameters(model, logger)
         shutil.copy(args.cfg, final_output_path)
         shutil.copy(inspect.getfile(eval(config.MODULE)), final_output_path)

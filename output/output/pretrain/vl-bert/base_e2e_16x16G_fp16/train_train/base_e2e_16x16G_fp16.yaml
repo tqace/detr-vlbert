@@ -97,13 +97,13 @@ TRAIN:
   SHUFFLE: true
   FLIP_PROB: 0.5
   BATCH_IMAGES:
-  - 6
-  - 6
+  - 4
+  - 4
   ASPECT_GROUPING: false
   RESUME: false
   AUTO_RESUME: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 20
+  END_EPOCH: 50
   OPTIMIZER: 'AdamW'
   CLIP_GRAD_NORM: 10
   LR: 1.0e-7
@@ -127,13 +127,13 @@ VAL:
   SHUFFLE: false
   FLIP_PROB: 0
   BATCH_IMAGES:
-  - 6
-  - 6
+  - 4
+  - 4
 
 TEST:
   SHUFFLE: false
   FLIP_PROB: 0
   TEST_EPOCH: 0
   BATCH_IMAGES:
-  - 6
-  - 6
+  - 4
+  - 4
