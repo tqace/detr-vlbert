@@ -85,7 +85,7 @@ class ToTensor(object):
 
 
 class Normalize(object):
-    def __init__(self, mean, std, to_bgr255=True):
+    def __init__(self, mean, std, to_bgr255=False):
         self.mean = mean
         self.std = std
         self.to_bgr255 = to_bgr255

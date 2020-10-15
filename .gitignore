@@ -1,11 +1,13 @@
 ./apex/
 ./cache/
 ./data/
+./cfgs/
 ./model/
 ./*output*/
 ./figs/
 *.model
 *.pyc
+*.sh
 *.zip
 *.log
 *.ubuntu

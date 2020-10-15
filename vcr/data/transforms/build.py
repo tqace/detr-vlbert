@@ -15,18 +15,22 @@ def build_transforms(cfg, mode='train'):
         flip_prob = cfg.VAL.FLIP_PROB
 
     to_bgr255 = True
-
+    '''
     normalize_transform = T.Normalize(
         mean=cfg.NETWORK.PIXEL_MEANS, std=cfg.NETWORK.PIXEL_STDS, to_bgr255=to_bgr255
     )
-
+    '''
+    normalize_transform = T.Compose([
+        T.ToTensor(),
+        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
     transform = T.Compose(
         [
             T.Resize(min_size, max_size),
             T.RandomHorizontalFlip(flip_prob),
-            T.ToTensor(),
+            #T.ToTensor(),
             normalize_transform,
-            T.FixPadding(min_size, max_size, pad=0)
+            #T.FixPadding(min_size, max_size, pad=0)
         ]
     )
     return transform

@@ -151,7 +151,10 @@ _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.FP16 = False
 _C.TRAIN.FP16_LOSS_SCALE = 128.0
 _C.TRAIN.LOSS_LOGGERS = [('ans_loss', 'AnsLoss'),
-                         ('cnn_regularization_loss', 'CNNRegLoss')]
+                         ('cnn_regularization_loss', 'CNNRegLoss'),
+                         ('detection_class_error', 'DetectionClsseError'),
+                         ('detection_ce_loss','DetrCeLoss'),
+                         ('detection_box_loss','DetrBoxLoss')]
 
 # ------------------------------------------------------------------------------------- #
 # Common validation related options

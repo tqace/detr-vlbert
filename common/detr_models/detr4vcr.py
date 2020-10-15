@@ -15,7 +15,7 @@ from common.utils.misc import (NestedTensor, nested_tensor_from_tensor_list,
                        is_dist_avail_and_initialized)
 
 from .backbone import build_backbone
-from .matcher import build_matcher
+from .matcher4vcr import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
 from .transformer import build_transformer
@@ -36,30 +36,28 @@ class DETR(nn.Module):
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
         """
         super().__init__()
-        num_classes = 91 if args.dataset_file != 'coco' else 91
-        if args.dataset_file == "coco_panoptic":
-            num_classes = 250
+        num_classes = 80
         self.backbone = build_backbone(args)
-        for p in self.backbone.parameters():
-            p.requires_grad = False
+        #for p in self.backbone.parameters():
+        #    p.requires_grad = False
         self.matcher = build_matcher(args)
         self.transformer = build_transformer(args)
-        for p in self.transformer.parameters():
-            p.requires_grad = False
+        #for p in self.transformer.parameters():
+        #    p.requires_grad = False
         self.num_queries = args.num_queries
         hidden_dim = self.transformer.d_model
-        self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
-        for p in self.class_embed.parameters():
-            p.requires_grad = False
+        self.class_embed_vcr = nn.Linear(hidden_dim, num_classes + 1)
+        #for p in self.class_embed.parameters():
+        #    p.requires_grad = False
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
-        for p in self.bbox_embed.parameters():
-            p.requires_grad = False
+        #for p in self.bbox_embed.parameters():
+        #    p.requires_grad = False
         self.query_embed = nn.Embedding(self.num_queries, hidden_dim)
-        for p in self.query_embed.parameters():
-            p.requires_grad = False
+        #for p in self.query_embed.parameters():
+        #    p.requires_grad = False
         self.input_proj = nn.Conv2d(self.backbone.num_channels, hidden_dim, kernel_size=1)
-        for p in self.input_proj.parameters():
-            p.requires_grad = False
+        #for p in self.input_proj.parameters():
+        #    p.requires_grad = False
         self.aux_loss = aux_loss
         self.num_classes = num_classes
         self.args = args
@@ -69,7 +67,7 @@ class DETR(nn.Module):
                 torch.nn.ReLU(inplace=True),
                 )
 
-    def forward(self, samples: NestedTensor,boxes,box_mask,im_info,mvrc_ops,boxes_cls_scores,mask_visual_embed=None):
+    def forward(self,images: NestedTensor,boxes,box_mask,im_info,classes):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
                - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
@@ -85,18 +83,29 @@ class DETR(nn.Module):
                                 dictionnaries containing the two above keys for each decoder layer.
         """
         box_inds = box_mask.nonzero()
-        if isinstance(samples, (list, torch.Tensor)):
-            samples = nested_tensor_from_tensor_list(samples)
+        if isinstance(images, (list, torch.Tensor)):
+            samples = nested_tensor_from_tensor_list(images)
         samples=samples.to("cuda")
         features, pos = self.backbone(samples)
     
         src, mask = features[-1].decompose()
         assert mask is not None
-        hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
-        
-        outputs_class = self.class_embed(hs)
+        hs, mem = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])
+        outputs_class = self.class_embed_vcr(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
+        #model_ = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True).cuda()
+        #model_.eval()
+        #transform = T.Compose([
+    	#	T.Resize(800),
+        #    	T.ToTensor(),
+	#	T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+	#    ])
+        #url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
+        #im = Image.open(requests.get(url, stream=True).raw)
+        #img = transform(im).unsqueeze(0)
+        
+
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
         #return out
@@ -116,7 +125,7 @@ class DETR(nn.Module):
         if self.args.masks:
             losses += ["masks"]
         criterion = SetCriterion(self.num_classes,self.matcher,weight_dict,self.args.eos_coef,losses2cal)
-        targets = self.get_targets(boxes,boxes_cls_scores,im_info)
+        targets = self.get_targets(boxes,classes,im_info)
         losses,indices = criterion(out,targets)
         max_boxes_len = max([len(iindices[0]) for iindices in indices])
         rep_all = hs[-1]
@@ -127,10 +136,14 @@ class DETR(nn.Module):
         for i in range(bs):    
         #    obj_rep_[i][:len(indices[i][0])] = torch.cat((hs[-1][i][(indices[i][0])].clone(),coord_embeds[:len(indices[i][0])].view(coord_embeds[:len(indices[i][0])].shape[0],-1)),-1)
         #    coord_embeds = coord_embeds[len(indices[i][0]):]
+            #batch_matched_boxes = out['pred_boxes'][i][(indices[i][0])]
+            #encoder_boxes = self.get_encoder_boxes(batch_matched_boxes,im_info[i],mem,samples)
+            #for j in range(len(encoder_boxes)):
+                #roi = mem[i,:,max(0,int(encoder_boxes[j][1])-1):min(mem.shape[-2],int(encoder_boxes[j][3])+2),max(0,int(encoder_boxes[j][0])-1):min(mem.shape[-1],int(encoder_boxes[j][2])+2)]
+                #m = nn.AdaptiveMaxPool2d((1,1))
+                #roi_vec = m(roi)
+                #obj_rep_[i][j] = roi_vec.view(1,-1)
             obj_rep_[i][:len(indices[i][0])] = hs[-1][i][(indices[i][0])].clone()
-        if mask_visual_embed is not None:
-            for i in range(obj_rep_.shape[0]):
-                obj_rep_[i][((mvrc_ops == 1)[i])] =  mask_visual_embed
         final_feats = self.obj_upsample(obj_rep_)
         obj_reps_padded = final_feats.new_zeros((final_feats.shape[0], boxes.shape[1], final_feats.shape[2]))
         obj_reps_padded[:, :final_feats.shape[1]] = final_feats
@@ -147,20 +160,35 @@ class DETR(nn.Module):
         return [{'pred_logits': a, 'pred_boxes': b}
                 for a, b in zip(outputs_class[:-1], outputs_coord[:-1])]
     
-    def get_targets(self,boxes,boxes_cls_scores,im_info):
+    def get_targets(self,boxes,classes,im_info):
         targets= []
         for i in range(len(boxes)):
-            w = im_info[0][0]
-            h = im_info[0][1]
-            is_pad = boxes[i]==-2
+            w = im_info[i][0]
+            h = im_info[i][1]
+            is_pad = boxes[i]==-1
             iboxes_keep = boxes[i][is_pad.sum(dim=1) == 0]
             image_size_xyxy = torch.as_tensor([w, h, w, h], dtype=torch.float, device="cuda")
             iboxes_keep = iboxes_keep / image_size_xyxy
             iboxes_keep = box_ops.box_xyxy_to_cxcywh(iboxes_keep)
-            ilabels_keep = torch.argmax(boxes_cls_scores[i],dim=1)[is_pad.sum(dim=1) == 0]
+            ilabels_keep = classes[i][classes[i]>0].long()
+            #ilabels_keep = self.cocoIdTrans(ilabels_keep)
             targets.append({'boxes':iboxes_keep.cuda(),'labels':ilabels_keep.cuda()})
 
         return targets
+    '''
+    def cocoIdTrans(self,labels):
+        new_lables = []
+        for label in labels:
+            if label 
+    '''
+    def get_encoder_boxes(self,pred_boxes,im_info,mem,samples):
+        w = im_info[0]
+        h = im_info[1]
+        boxes = box_ops.box_cxcywh_to_xyxy(pred_boxes)*torch.as_tensor([w, h, w, h], dtype=torch.float, device="cuda")
+        ratio = mem.shape[-1]/samples.decompose()[0].shape[-1]
+        boxes*=ratio
+        return boxes
+
 
 class SetCriterion(nn.Module):
     """ This class computes the loss for DETR.
@@ -200,6 +228,7 @@ class SetCriterion(nn.Module):
                                     dtype=torch.int64, device=src_logits.device)
         target_classes[idx] = target_classes_o
 
+        #ForkedPdb().set_trace()
         loss_ce = F.cross_entropy(src_logits.transpose(1, 2), target_classes, self.empty_weight)
         losses = {'loss_ce': loss_ce}
         losses['class_error'] = 100 - accuracy(src_logits[idx], target_classes_o)[0]

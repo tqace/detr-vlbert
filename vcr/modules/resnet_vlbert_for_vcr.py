@@ -9,7 +9,7 @@ from common.nlp.time_distributed import TimeDistributed
 from common.visual_linguistic_bert import VisualLinguisticBert, VisualLinguisticBertMVRCHeadTransform
 from common.nlp.roberta import RobertaTokenizer
 from common.detr_models.detr4vcr import DETR
-
+from ForkedPdb import ForkedPdb
 BERT_WEIGHTS_NAME = 'pytorch_model.bin'
 
 
@@ -21,13 +21,13 @@ class ResNetVLBERT(Module):
         self.enable_cnn_reg_loss = config.NETWORK.ENABLE_CNN_REG_LOSS
         self.cnn_loss_top = config.NETWORK.CNN_LOSS_TOP
         if not config.NETWORK.BLIND:
-            #'''
+            '''
             self.image_feature_extractor = FastRCNN(config,
                                                     average_pool=True,
                                                     final_dim=config.NETWORK.IMAGE_FINAL_DIM,
                                                     enable_cnn_reg_loss=(self.enable_cnn_reg_loss and not self.cnn_loss_top))
-            #'''
-            #self.image_feature_extractor = DETR(args)
+            '''
+            self.image_feature_extractor = DETR(args)
             if config.NETWORK.VLBERT.object_word_embed_mode == 1:
                 self.object_linguistic_embeddings = nn.Embedding(92, config.NETWORK.VLBERT.hidden_size)
             elif config.NETWORK.VLBERT.object_word_embed_mode == 2:
@@ -94,7 +94,7 @@ class ResNetVLBERT(Module):
 
     def init_weight(self):
         if not self.config.NETWORK.BLIND:
-            self.image_feature_extractor.init_weight()
+            #self.image_feature_extractor.init_weight()
             if self.object_linguistic_embeddings is not None:
                 self.object_linguistic_embeddings.weight.data.normal_(mean=0.0, std=0.02)
             if self.enable_cnn_reg_loss and self.cnn_loss_top:
@@ -109,8 +109,8 @@ class ResNetVLBERT(Module):
     def train(self, mode=True):
         super(ResNetVLBERT, self).train(mode)
         # turn some frozen layers to eval mode
-        if (not self.config.NETWORK.BLIND) and self.image_feature_bn_eval:
-            self.image_feature_extractor.bn_eval()
+        #if (not self.config.NETWORK.BLIND) and self.image_feature_bn_eval:
+        #    self.image_feature_extractor.bn_eval()
 
     def fix_params(self):
         if self.config.NETWORK.BLIND:
@@ -257,12 +257,11 @@ class ResNetVLBERT(Module):
         if self.config.NETWORK.BLIND:
             obj_reps = {'obj_reps': boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.IMAGE_FINAL_DIM))}
         else:
-            obj_reps = self.image_feature_extractor(images=images,
+            detection_losses,obj_reps = self.image_feature_extractor(images=images,
                                                     boxes=boxes,
                                                     box_mask=box_mask,
                                                     im_info=im_info,
-                                                    classes=objects,
-                                                    segms=segms)
+                                                    classes=objects)
 
         num_choices = answer_choices.shape[1]
         question_ids = question[:, :, 0]
@@ -366,11 +365,17 @@ class ResNetVLBERT(Module):
         else:
             ans_loss = F.cross_entropy(logits, answer_label.long().view(-1))
 
+        detection_loss = detection_losses['loss_ce']+detection_losses['loss_bbox']+detection_losses['loss_giou']
+        box_loss = detection_losses['loss_bbox']+detection_losses['loss_giou']
+        class_loss = detection_losses['loss_ce']
         outputs.update({'label_logits': logits,
                         'label': answer_label.long().view(-1),
-                        'ans_loss': ans_loss})
+                        'ans_loss': ans_loss,
+                        'detection_class_error':detection_losses['class_error'],
+                        'detection_ce_loss':detection_losses['loss_ce'],
+                        'detection_box_loss':detection_losses['loss_bbox']+detection_losses['loss_giou']})
 
-        loss = ans_loss.mean() * self.config.NETWORK.ANS_LOSS_WEIGHT
+        loss = ans_loss.mean() * self.config.NETWORK.ANS_LOSS_WEIGHT + 0.5*class_loss.mean() + box_loss.mean()*0.001
 
         if mask_position is not None:
             assert False, "Todo: align to original position."
@@ -385,7 +390,8 @@ class ResNetVLBERT(Module):
             outputs.update({
                 'mask_object_loss': mask_object_loss,
                 'mask_object_logits': mask_pred_logits,
-                'mask_object_label': mask_label})
+                'mask_object_label': mask_label
+                })
             loss = loss + mask_object_loss.mean() * self.config.NETWORK.MASK_OBJECT_LOSS_WEIGHT
 
         if self.enable_cnn_reg_loss:
@@ -439,8 +445,7 @@ class ResNetVLBERT(Module):
                                                     boxes=boxes,
                                                     box_mask=box_mask,
                                                     im_info=im_info,
-                                                    classes=objects,
-                                                    segms=segms)
+                                                    classes=objects)
 
         num_choices = answer_choices.shape[1]
         question_ids = question[:, :, 0]

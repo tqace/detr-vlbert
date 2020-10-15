@@ -1,7 +1,7 @@
 import torch
 
 from common.utils.clip_pad import *
-
+from ForkedPdb import ForkedPdb
 
 class BatchCollator(object):
     def __init__(self, dataset, append_ind=False):
@@ -64,6 +64,8 @@ class BatchCollator(object):
             out = {}
             image = ibatch[self.data_names.index('image')]
             out['image'] = clip_pad_images(image, max_shape, pad=0)
+            
+            #ForkedPdb().set_trace()
 
             boxes = ibatch[self.data_names.index('boxes')]
             out['boxes'] = clip_pad_boxes(boxes, max_boxes, pad=-1)
