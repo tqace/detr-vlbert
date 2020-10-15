@@ -29,7 +29,7 @@ class ResNetVLBERT(Module):
             '''
             self.image_feature_extractor = DETR(args)
             if config.NETWORK.VLBERT.object_word_embed_mode == 1:
-                self.object_linguistic_embeddings = nn.Embedding(92, config.NETWORK.VLBERT.hidden_size)
+                self.object_linguistic_embeddings = nn.Embedding(81, config.NETWORK.VLBERT.hidden_size)
             elif config.NETWORK.VLBERT.object_word_embed_mode == 2:
                 self.object_linguistic_embeddings = nn.Embedding(1, config.NETWORK.VLBERT.hidden_size)
             elif config.NETWORK.VLBERT.object_word_embed_mode == 3:
@@ -40,7 +40,7 @@ class ResNetVLBERT(Module):
                 self.cnn_loss_reg = nn.Sequential(
                     VisualLinguisticBertMVRCHeadTransform(config.NETWORK.VLBERT),
                     nn.Dropout(config.NETWORK.CNN_REG_DROPOUT, inplace=False),
-                    nn.Linear(config.NETWORK.VLBERT.hidden_size, 92)
+                    nn.Linear(config.NETWORK.VLBERT.hidden_size, 81)
                 )
         self.image_feature_bn_eval = config.NETWORK.IMAGE_FROZEN_BN
 
