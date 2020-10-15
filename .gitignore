@@ -12,3 +12,4 @@
 *.log
 *.ubuntu
 ./tmp/
+./vcr_test/
