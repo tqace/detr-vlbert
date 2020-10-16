@@ -441,7 +441,7 @@ class ResNetVLBERT(Module):
         if self.config.NETWORK.BLIND:
             obj_reps = {'obj_reps': boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.IMAGE_FINAL_DIM))}
         else:
-            obj_reps = self.image_feature_extractor(images=images,
+            detection_losses,obj_reps = self.image_feature_extractor(images=images,
                                                     boxes=boxes,
                                                     box_mask=box_mask,
                                                     im_info=im_info,
