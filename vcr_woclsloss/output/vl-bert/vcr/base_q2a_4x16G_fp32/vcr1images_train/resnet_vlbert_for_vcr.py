@@ -375,7 +375,7 @@ class ResNetVLBERT(Module):
                         'detection_ce_loss':detection_losses['loss_ce'],
                         'detection_box_loss':detection_losses['loss_bbox']+detection_losses['loss_giou']})
 
-        loss = ans_loss.mean() * self.config.NETWORK.ANS_LOSS_WEIGHT + 0*class_loss.mean() + box_loss.mean()*0
+        loss = ans_loss.mean() * self.config.NETWORK.ANS_LOSS_WEIGHT + 0*class_loss.mean() + box_loss.mean()*0.001
 
         if mask_position is not None:
             assert False, "Todo: align to original position."

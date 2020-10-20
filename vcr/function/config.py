@@ -123,7 +123,7 @@ _C.NETWORK.CLASSIFIER_SIGMOID_LOSS_POSITIVE_WEIGHT = 1.0
 # Common training related options
 # ------------------------------------------------------------------------------------- #
 _C.TRAIN = edict()
-_C.TRAIN.LR_MULT = []
+_C.TRAIN.LR_MULT = [('image_feature_extractor.backbone',0.0001),('image_feature_extractor.transformer',0.001)]
 _C.TRAIN.VISUAL_SCALE_TEXT_LR_MULT = 1.0
 _C.TRAIN.VISUAL_SCALE_OBJECT_LR_MULT = 1.0
 _C.TRAIN.VISUAL_SCALE_CLIP_GRAD_NORM = -1
