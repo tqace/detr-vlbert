@@ -71,6 +71,11 @@ class DETR(nn.Module):
                 torch.nn.Linear(256,768),
                 torch.nn.ReLU(inplace=True),
                 )
+        self.downsample = torch.nn.Sequential(
+                torch.nn.Conv2d(256, 768, kernel_size=3, stride=1,padding=0, bias=False),
+                torch.nn.BatchNorm2d(768),
+                torch.nn.ReLU(inplace=True)
+                )
 
     def forward(self, samples: NestedTensor,boxes,box_mask,im_info,mvrc_ops,boxes_cls_scores,mask_visual_embed=None):
         """ The forward expects a NestedTensor, which consists of:
@@ -158,10 +163,10 @@ class DETR(nn.Module):
         obj_reps_padded[:, :final_feats.shape[1]] = final_feats
         obj_reps_ = obj_reps_padded
         '''
-        mem_ = mem.view(bs,256,-1)
+        mem_ = self.downsample(mem)
+        mem_ = mem_.view(bs,768,-1)
         mem_ = torch.transpose(mem_,1,2)
-        mem_ = self.obj_upsample(mem_.contiguous().view(-1,256))
-        obj_reps["obj_reps"] = mem_.view(bs,-1,768)
+        obj_reps["obj_reps"] = mem_
         
         gap = nn.AdaptiveAvgPool2d((1,1))
 
