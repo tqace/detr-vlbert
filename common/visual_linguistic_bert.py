@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from external.pytorch_pretrained_bert.modeling import BertLayerNorm, BertEncoder, BertPooler, ACT2FN, BertOnlyMLMHead
-
+from ForkedPdb import ForkedPdb
 # todo: add this to config
 NUM_SPECIAL_WORDS = 1000
 
@@ -206,6 +206,7 @@ class VisualLinguisticBert(BaseModel):
         object_end = text_end + object_mask.sum(1, keepdim=True)
 
         # seamlessly concatenate visual linguistic embeddings of text and object
+    
         _zero_id = torch.zeros((bs, ), dtype=torch.long, device=text_vl_embeddings.device)
         vl_embeddings = text_vl_embeddings.new_zeros((bs, max_length, vl_embed_size))
         vl_embeddings[grid_pos < text_end] = text_vl_embeddings[text_mask]
