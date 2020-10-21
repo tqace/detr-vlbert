@@ -29,11 +29,11 @@ DATASET:
 
 - DATASET: general_corpus
   TRAIN_ANNOTATION_FILE: './data/en_corpus/wiki.doc'
-  TRAIN_OFFSET_FILE: './data/en_corpus/wiki_offset.txt'
+  TRAIN_OFFSET_FILE: './data/en_corpus/wiki_offset.txt_'
   VAL_ANNOTATION_FILE: './data/en_corpus/bc1g.doc'
-  VAL_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt'
+  VAL_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt_'
   TEST_ANNOTATION_FILE: './data/en_corpus/bc1g.doc'
-  TEST_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt'
+  TEST_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt_'
   SEQ_LEN: 64
   MIN_SEQ_LEN: 64
 
@@ -97,8 +97,8 @@ TRAIN:
   SHUFFLE: true
   FLIP_PROB: 0.5
   BATCH_IMAGES:
-  - 4
-  - 4
+  - 1
+  - 1
   ASPECT_GROUPING: false
   RESUME: false
   AUTO_RESUME: true

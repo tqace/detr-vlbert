@@ -1,1 +1,1 @@
-./scripts/dist_run_single.sh 8 pretrain/train_end2end.py cfgs/pretrain/base_e2e_16x16G_fp16.yaml visual_embedding
+CUDA_VISIBLE_DEVICES=8 ./scripts/dist_run_single.sh 1 pretrain/train_end2end.py cfgs/pretrain/base_e2e_16x16G_fp16.yaml debug

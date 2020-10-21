@@ -167,7 +167,7 @@ class ResNetVLBERTForPretrainingMultitask(Module):
         text_visual_embeddings = self.get_text_visual_embdding(text, visual_embedding)
 
         object_linguistic_embeddings = self.object_linguistic_embeddings(
-            boxes.new_zeros((boxes.shape[0], boxes.shape[1])).long()
+            boxes.new_zeros((obj_reps['obj_reps'].shape[0], obj_reps['obj_reps'].shape[1])).long()
         )
         if self.config.NETWORK.WITH_MVRC_LOSS:
             object_linguistic_embeddings[mvrc_ops == 1] = self.object_mask_word_embedding.weight[0]

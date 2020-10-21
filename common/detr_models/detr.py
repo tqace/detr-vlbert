@@ -136,6 +136,7 @@ class DETR(nn.Module):
         rep_all = hs[-1]
         obj_reps = {}
         bs,_,_ = rep_all.shape
+        '''
         obj_rep_ = torch.zeros((bs,max_boxes_len,256)).cuda()
         #coord_embeds = coordinate_embeddings(torch.cat((boxes[box_inds[:, 0], box_inds[:, 1]], im_info[box_inds[:, 0], :2]), 1),256)
         for i in range(bs):    
@@ -156,7 +157,11 @@ class DETR(nn.Module):
         obj_reps_padded = final_feats.new_zeros((final_feats.shape[0], boxes.shape[1], final_feats.shape[2]))
         obj_reps_padded[:, :final_feats.shape[1]] = final_feats
         obj_reps_ = obj_reps_padded
-        obj_reps["obj_reps"] = obj_reps_
+        '''
+        mem_ = mem.view(bs,256,-1)
+        mem_ = torch.transpose(mem_,1,2)
+        mem_ = self.obj_upsample(mem_.view(-1,256))
+        obj_reps["obj_reps"] = mem_.view(bs,-1,768)
         
         gap = nn.AdaptiveAvgPool2d((1,1))
 

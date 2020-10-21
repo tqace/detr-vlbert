@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from external.pytorch_pretrained_bert.modeling import BertLayerNorm, BertEncoder, BertPooler, ACT2FN, BertOnlyMLMHead
-
+from ForkedPdb import ForkedPdb
 # todo: add this to config
 NUM_SPECIAL_WORDS = 1000
 
@@ -199,7 +199,7 @@ class VisualLinguisticBert(BaseModel):
 
         bs = text_vl_embeddings.size(0)
         vl_embed_size = text_vl_embeddings.size(-1)
-        max_length = (text_mask.sum(1) + object_mask.sum(1)).max() + 1
+        max_length = (text_mask.sum(1) + text_vl_embeddings.size(1)).max() + 1
         grid_ind, grid_pos = torch.meshgrid(torch.arange(bs, dtype=torch.long, device=text_vl_embeddings.device),
                                             torch.arange(max_length, dtype=torch.long, device=text_vl_embeddings.device))
         text_end = text_mask.sum(1, keepdim=True)
@@ -209,7 +209,7 @@ class VisualLinguisticBert(BaseModel):
         _zero_id = torch.zeros((bs, ), dtype=torch.long, device=text_vl_embeddings.device)
         vl_embeddings = text_vl_embeddings.new_zeros((bs, max_length, vl_embed_size))
         vl_embeddings[grid_pos < text_end] = text_vl_embeddings[text_mask]
-        vl_embeddings[(grid_pos >= text_end) & (grid_pos < object_end)]  = object_vl_embeddings[object_mask]
+        vl_embeddings[(grid_pos >= text_end) & (grid_pos < object_end)]  = object_vl_embeddings
         vl_embeddings[grid_pos == object_end] = self.end_embedding(_zero_id)
 
         # token type embeddings/ segment embeddings
