@@ -43,6 +43,7 @@ class GeneralCorpus(Dataset):
 
         if sentence.strip() == '':
             return self.get_sentence(random.sample(range(0,1000000),1)[0])
+            #return self.get_sentence(random.sample(range(0,10),1)[0])
         else:
             return sentence.strip()
 

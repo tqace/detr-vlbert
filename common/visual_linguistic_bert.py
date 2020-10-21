@@ -185,7 +185,7 @@ class VisualLinguisticBert(BaseModel):
             text_visual_embeddings = self.visual_ln_text(text_visual_embeddings)
         else:
             text_visual_embeddings *= self.visual_scale_text
-        text_vl_embeddings = text_linguistic_embedding  + text_visual_embeddings - text_visual_embeddings
+        text_vl_embeddings = text_linguistic_embedding  + text_visual_embeddings #- text_visual_embeddings
 
         object_visual_embeddings = object_vl_embeddings[:, :, :self.config.visual_size]
         if self.visual_1x1_object is not None:

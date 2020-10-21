@@ -64,7 +64,10 @@ class DETR(nn.Module):
         self.num_classes = num_classes
         self.args = args
         self.obj_upsample = torch.nn.Sequential(
-                torch.nn.Dropout(p=0.1),
+                torch.nn.Linear(256,768),
+                torch.nn.ReLU(inplace=True),
+                )
+        self.obj_upsample_ve = torch.nn.Sequential(
                 torch.nn.Linear(256,768),
                 torch.nn.ReLU(inplace=True),
                 )
@@ -138,14 +141,14 @@ class DETR(nn.Module):
         for i in range(bs):    
         #    obj_rep_[i][:len(indices[i][0])] = torch.cat((hs[-1][i][(indices[i][0])].clone(),coord_embeds[:len(indices[i][0])].view(coord_embeds[:len(indices[i][0])].shape[0],-1)),-1)
         #    coord_embeds = coord_embeds[len(indices[i][0]):]
-            batch_matched_boxes = out['pred_boxes'][i][(indices[i][0])]
-            encoder_boxes = self.get_encoder_boxes(batch_matched_boxes,im_info[i],mem,samples)
-            for j in range(len(encoder_boxes)):
-                roi = mem[i,:,max(0,int(encoder_boxes[j][1])-1):min(mem.shape[-2],int(encoder_boxes[j][3])+2),max(0,int(encoder_boxes[j][0])-1):min(mem.shape[-1],int(encoder_boxes[j][2])+2)]
-                m = nn.AdaptiveMaxPool2d((1,1))
-                roi_vec = m(roi)
-                obj_rep_[i][j] = roi_vec.view(1,-1)
-            #obj_rep_[i][:len(indices[i][0])] = hs[-1][i][(indices[i][0])].clone()
+            #batch_matched_boxes = out['pred_boxes'][i][(indices[i][0])]
+            #encoder_boxes = self.get_encoder_boxes(batch_matched_boxes,im_info[i],mem,samples)
+            #for j in range(len(encoder_boxes)):
+            #    roi = mem[i,:,max(0,int(encoder_boxes[j][1])-1):min(mem.shape[-2],int(encoder_boxes[j][3])+2),max(0,int(encoder_boxes[j][0])-1):min(mem.shape[-1],int(encoder_boxes[j][2])+2)]
+            #    m = nn.AdaptiveMaxPool2d((1,1))
+            #    roi_vec = m(roi)
+            #    obj_rep_[i][j] = roi_vec.view(1,-1)
+            obj_rep_[i][:len(indices[i][0])] = hs[-1][i][(indices[i][0])].clone()
         if mask_visual_embed is not None:
             for i in range(obj_rep_.shape[0]):
                 obj_rep_[i][((mvrc_ops == 1)[i])] =  mask_visual_embed
@@ -155,7 +158,11 @@ class DETR(nn.Module):
         obj_reps_ = obj_reps_padded
         obj_reps["obj_reps"] = obj_reps_
         
-        return losses,obj_reps
+        gap = nn.AdaptiveAvgPool2d((1,1))
+
+        visual_embedding = self.obj_upsample_ve(gap(mem).view(bs,-1))
+
+        return losses,obj_reps, visual_embedding
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):

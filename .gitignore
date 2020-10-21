@@ -13,3 +13,5 @@
 *.ubuntu
 ./tmp/
 ./vcr_test/
+./debug/
+./visual_embedding/
