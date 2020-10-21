@@ -154,7 +154,8 @@ class VisualLinguisticBert(BaseModel):
                 encoded_layer_text = encoded_layer[:, :max_text_len]
                 encoded_layer_object = encoded_layer.new_zeros(
                     (encoded_layer.shape[0], max_object_len, encoded_layer.shape[2]))
-                encoded_layer_object[object_mask] = encoded_layer[object_mask_new]
+                bs = encoded_layer_object.size(0)
+                encoded_layer_object[:int(bs/2)] = encoded_layer[object_mask_new].view(int(bs/2),-1,encoded_layer.shape[-1])
                 encoded_layers_text.append(encoded_layer_text)
                 encoded_layers_object.append(encoded_layer_object)
             if not output_all_encoded_layers:
@@ -199,17 +200,19 @@ class VisualLinguisticBert(BaseModel):
 
         bs = text_vl_embeddings.size(0)
         vl_embed_size = text_vl_embeddings.size(-1)
-        max_length = (text_mask.sum(1) + text_vl_embeddings.size(1)).max() + 1
+        max_length = int((text_mask.sum(1) + object_vl_embeddings.size(1)).max() + 1)
         grid_ind, grid_pos = torch.meshgrid(torch.arange(bs, dtype=torch.long, device=text_vl_embeddings.device),
                                             torch.arange(max_length, dtype=torch.long, device=text_vl_embeddings.device))
         text_end = text_mask.sum(1, keepdim=True)
-        object_end = text_end + object_mask.sum(1, keepdim=True)
-
+        object_end = text_end.new_zeros(text_end.shape)
+        object_end[:int(bs/2)] = text_end[:int(bs/2)] + object_vl_embeddings.size(1)#object_mask.sum(1, keepdim=True)
+        object_end[int(bs/2):] = text_end[int(bs/2):]
         # seamlessly concatenate visual linguistic embeddings of text and object
+
         _zero_id = torch.zeros((bs, ), dtype=torch.long, device=text_vl_embeddings.device)
         vl_embeddings = text_vl_embeddings.new_zeros((bs, max_length, vl_embed_size))
         vl_embeddings[grid_pos < text_end] = text_vl_embeddings[text_mask]
-        vl_embeddings[(grid_pos >= text_end) & (grid_pos < object_end)]  = object_vl_embeddings
+        vl_embeddings[:int(bs/2)][((grid_pos >= text_end) & (grid_pos < object_end))[:int(bs/2)]]  = object_vl_embeddings[:int(bs/2)].view(-1,object_vl_embeddings.size(-1))
         vl_embeddings[grid_pos == object_end] = self.end_embedding(_zero_id)
 
         # token type embeddings/ segment embeddings
@@ -269,9 +272,9 @@ class VisualLinguisticBert(BaseModel):
                 if k_ == 'word_embeddings.weight':
                     self.word_embeddings.weight.data = v.to(dtype=self.word_embeddings.weight.data.dtype,
                                                             device=self.word_embeddings.weight.data.device)
-                elif k_ == 'position_embeddings.weight':
-                    self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
-                                                                device=self.position_embeddings.weight.data.device)
+                #elif k_ == 'position_embeddings.weight':
+                #    self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
+                #                                                device=self.position_embeddings.weight.data.device)
                 elif k_ == 'token_type_embeddings.weight':
                     self.token_type_embeddings.weight.data[:v.size(0)] = v.to(
                         dtype=self.token_type_embeddings.weight.data.dtype,
@@ -339,9 +342,9 @@ class VisualLinguisticBertForPretraining(VisualLinguisticBert):
             for p in self.word_embeddings.parameters():
                 p.requires_grad = False
 
-        if config.pos_embedding_frozen:
-            for p in self.position_embeddings.parameters():
-                p.requires_grad = False
+        #if config.pos_embedding_frozen:
+        #    for p in self.position_embeddings.parameters():
+        #        p.requires_grad = False
 
     def forward(self,
                 text_input_ids,
@@ -405,9 +408,9 @@ class VisualLinguisticBertForPretraining(VisualLinguisticBert):
                     if k_ == 'word_embeddings.weight':
                         self.word_embeddings.weight.data = v.to(dtype=self.word_embeddings.weight.data.dtype,
                                                                 device=self.word_embeddings.weight.data.device)
-                    elif k_ == 'position_embeddings.weight':
-                        self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
-                                                                    device=self.position_embeddings.weight.data.device)
+                    #elif k_ == 'position_embeddings.weight':
+                    #    self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
+                    #                                                device=self.position_embeddings.weight.data.device)
                     elif k_ == 'token_type_embeddings.weight':
                         self.token_type_embeddings.weight.data[:v.size(0)] = v.to(
                             dtype=self.token_type_embeddings.weight.data.dtype,
