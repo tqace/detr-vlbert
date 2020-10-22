@@ -166,6 +166,8 @@ class DETR(nn.Module):
         mem_ = self.downsample(mem)
         mem_ = mem_.view(bs,768,-1)
         mem_ = torch.transpose(mem_,1,2)
+        sample_indexs = random.sample(range(mem_.size(1)),int(mem_.size(1)/2))
+        mem_ = mem_[:,sample_indexs,:]
         obj_reps["obj_reps"] = mem_
         
         gap = nn.AdaptiveAvgPool2d((1,1))
