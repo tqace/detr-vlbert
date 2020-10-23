@@ -408,9 +408,9 @@ class VisualLinguisticBertForPretraining(VisualLinguisticBert):
                     if k_ == 'word_embeddings.weight':
                         self.word_embeddings.weight.data = v.to(dtype=self.word_embeddings.weight.data.dtype,
                                                                 device=self.word_embeddings.weight.data.device)
-                    #elif k_ == 'position_embeddings.weight':
-                    #    self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
-                    #                                                device=self.position_embeddings.weight.data.device)
+                    elif k_ == 'position_embeddings.weight':
+                        self.position_embeddings.weight.data = v.to(dtype=self.position_embeddings.weight.data.dtype,
+                                                                    device=self.position_embeddings.weight.data.device)
                     elif k_ == 'token_type_embeddings.weight':
                         self.token_type_embeddings.weight.data[:v.size(0)] = v.to(
                             dtype=self.token_type_embeddings.weight.data.dtype,

@@ -72,7 +72,7 @@ class DETR(nn.Module):
                 torch.nn.ReLU(inplace=True),
                 )
         self.downsample = torch.nn.Sequential(
-                torch.nn.Conv2d(256, 768, kernel_size=3, stride=1,padding=0, bias=False),
+                torch.nn.Conv2d(256, 768, kernel_size=3, stride=2,padding=1, bias=False),
                 torch.nn.BatchNorm2d(768),
                 torch.nn.ReLU(inplace=True)
                 )

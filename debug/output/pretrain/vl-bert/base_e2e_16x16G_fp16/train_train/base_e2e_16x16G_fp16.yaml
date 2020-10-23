@@ -9,8 +9,8 @@ CHECKPOINT_FREQUENT: 1
 MODEL_PREFIX: 'vl-bert_base_res101_pretrain_multitask'
 NUM_WORKERS_PER_GPU: 1
 SCALES:
-- 600
-- 900
+- 640
+- 960
 
 DATASET:
 
@@ -29,11 +29,11 @@ DATASET:
 
 - DATASET: general_corpus
   TRAIN_ANNOTATION_FILE: './data/en_corpus/wiki.doc'
-  TRAIN_OFFSET_FILE: './data/en_corpus/wiki_offset.txt_'
+  TRAIN_OFFSET_FILE: './data/en_corpus/wiki_offset.txt'
   VAL_ANNOTATION_FILE: './data/en_corpus/bc1g.doc'
-  VAL_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt_'
+  VAL_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt'
   TEST_ANNOTATION_FILE: './data/en_corpus/bc1g.doc'
-  TEST_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt_'
+  TEST_OFFSET_FILE: './data/en_corpus/bc1g_offset.txt'
   SEQ_LEN: 64
   MIN_SEQ_LEN: 64
 
@@ -84,7 +84,7 @@ NETWORK:
     hidden_act: "gelu"
     hidden_dropout_prob: 0.1
     attention_probs_dropout_prob: 0.1
-    max_position_embeddings: 512
+    max_position_embeddings: 1000
     type_vocab_size: 3
     vocab_size: 30522
     initializer_range: 0.02
@@ -97,8 +97,8 @@ TRAIN:
   SHUFFLE: true
   FLIP_PROB: 0.5
   BATCH_IMAGES:
-  - 1
-  - 1
+  - 6
+  - 6
   ASPECT_GROUPING: false
   RESUME: false
   AUTO_RESUME: true
@@ -127,13 +127,13 @@ VAL:
   SHUFFLE: false
   FLIP_PROB: 0
   BATCH_IMAGES:
-  - 2
-  - 2
+  - 6
+  - 6
 
 TEST:
   SHUFFLE: false
   FLIP_PROB: 0
   TEST_EPOCH: 0
   BATCH_IMAGES:
-  - 2
-  - 2
+  - 6
+  - 6
