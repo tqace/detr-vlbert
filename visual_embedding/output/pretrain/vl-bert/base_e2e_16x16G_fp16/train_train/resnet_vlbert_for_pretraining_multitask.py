@@ -101,7 +101,7 @@ class ResNetVLBERTForPretrainingMultitask(Module):
         text_visual_embdding = torch.zeros(text.shape[0],text.shape[1], visual_embedding.shape[-1]).cuda()
         for i in range(text.shape[0]):
             for j in range(text.shape[1]):
-                if text[i][i]>0:
+                if text[i][j]>0:
                     text_visual_embdding[i][j] = visual_embedding[i].clone()
         return text_visual_embdding
     

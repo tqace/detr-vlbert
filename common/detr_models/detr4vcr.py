@@ -67,6 +67,38 @@ class DETR(nn.Module):
                 torch.nn.ReLU(inplace=True),
                 )
 
+        #self.obj_upsample_ve = torch.nn.Sequential(
+        #        torch.nn.Linear(256,768),
+        #        torch.nn.ReLU(inplace=True),
+        #        )
+    def forward_img(self,images):
+        """ The forward expects a NestedTensor, which consists of:
+               - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
+               - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
+
+            It returns a dict with the following elements:
+               - "pred_logits": the classification logits (including no-object) for all queries.
+                                Shape= [batch_size x num_queries x (num_classes + 1)]
+               - "pred_boxes": The normalized boxes coordinates for all queries, represented as
+                               (center_x, center_y, height, width). These values are normalized in [0, 1],
+                               relative to the size of each individual image (disregarding possible padding).
+                               See PostProcess for information on how to retrieve the unnormalized bounding box.
+               - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
+                                dictionnaries containing the two above keys for each decoder layer.
+        """
+        if isinstance(images, (list, torch.Tensor)):
+            samples = nested_tensor_from_tensor_list(images)
+        #samples=samples.to("cuda")
+        features, pos = self.backbone(samples)
+    
+        src, mask = features[-1].decompose()
+        assert mask is not None
+        hs, mem = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])
+        outputs_class = self.class_embed_vcr(hs)
+        outputs_coord = self.bbox_embed(hs).sigmoid()
+        out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
+        return out
+
     def forward(self,images: NestedTensor,boxes,box_mask,im_info,classes):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
@@ -150,7 +182,11 @@ class DETR(nn.Module):
         obj_reps_ = obj_reps_padded
         obj_reps["obj_reps"] = obj_reps_
         
-        return losses,obj_reps
+        gap = nn.AdaptiveAvgPool2d((1,1))
+
+        visual_embedding = self.obj_upsample_ve(gap(mem).view(bs,-1))
+
+        return losses,obj_reps, visual_embedding
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):
